@@ -1,0 +1,17 @@
+# Pinned runtime dependencies for the support-assistant work sample.
+#
+# These are the exact versions the committed evaluation report was produced
+# against. Pinning the transitive dependencies as well as the direct one means
+# a rebuild resolves to the same tree rather than to "whatever is current".
+#
+# Regenerate with:
+#   python -c "import importlib.metadata as m; [print(f'{p}=={m.version(p)}') for p in ('pydantic','pydantic_core','annotated-types','typing_extensions','typing-inspection')]"
+#
+# Direct dependency
+pydantic==2.13.4
+
+# Transitive dependencies of pydantic 2.13.4
+pydantic_core==2.46.4
+annotated-types==0.7.0
+typing_extensions==4.16.0
+typing-inspection==0.4.2

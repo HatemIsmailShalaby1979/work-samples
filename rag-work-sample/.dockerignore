@@ -1,0 +1,31 @@
+# Keep the build context small and free of anything that should not reach an image.
+
+.git
+.gitignore
+.github
+build/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Local notes, editor state, and anything environment-specific.
+.env
+.env.*
+*.local
+.vscode/
+.idea/
+*.log
+
+# The test suite and the docs are not needed to run the service, and excluding
+# them keeps the image free of test fixtures.
+tests/
+docs/
+README.md
+Dockerfile
+docker-compose.yml
+.dockerignore

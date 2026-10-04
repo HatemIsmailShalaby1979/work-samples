@@ -1,0 +1,28 @@
+[project]
+name = "support-assistant-work-sample"
+version = "0.1.0"
+description = "A local-only, evaluated support-policy assistant work sample. Not production software."
+requires-python = ">=3.12"
+dependencies = [
+    # The only runtime dependency. Already present in the environment this was
+    # built in; nothing else is needed and nothing else is installed.
+    "pydantic>=2.6,<3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"

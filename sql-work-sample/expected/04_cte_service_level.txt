@@ -1,0 +1,7 @@
+-- 04_cte_service_level.sql  [statement 1]
+queue_name|channel|target_answer_seconds|target_sl_pct|answered_tickets|in_target|service_level_pct|verdict
+Technical|phone|45|75.0|307|238|77.52|MEETS
+Escalations|email|240|90.0|109|86|78.9|MISSES
+General|chat|60|80.0|227|180|79.3|MISSES
+Billing|phone|30|80.0|436|383|87.84|MEETS
+-- rows: 4

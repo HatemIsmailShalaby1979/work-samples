@@ -1,0 +1,81 @@
+# Local Docker Compose for the support-assistant work sample.
+#
+# This runs on the developer's machine only. No registry, no cloud, no paid
+# resource, no secret. Every value below is a local default.
+#
+#   docker compose up --build          # start the service on :8080
+#   docker compose --profile tools run --rm eval    # run the evaluation harness
+#   docker compose down                # stop
+
+name: support-assistant-work-sample
+
+services:
+  assistant:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: support-assistant-work-sample:local
+    container_name: support-assistant
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      SUPPORT_HOST: "0.0.0.0"
+      SUPPORT_PORT: "8080"
+      SUPPORT_LOG_LEVEL: "${SUPPORT_LOG_LEVEL:-INFO}"
+      # Query text stays out of the logs unless explicitly opted in, and is
+      # redacted when it is. See docs/RUNBOOK.md.
+      SUPPORT_LOG_QUERY_TEXT: "${SUPPORT_LOG_QUERY_TEXT:-false}"
+      SUPPORT_GENERATOR: "${SUPPORT_GENERATOR:-mock}"
+      SUPPORT_REQUEST_TIMEOUT_SECONDS: "${SUPPORT_REQUEST_TIMEOUT_SECONDS:-10}"
+      SUPPORT_CORPUS_PATH: "/app/corpus/harbourline_procedures.json"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2).status == 200 else 1)"
+      interval: 15s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    # The container needs no writable filesystem. An accidental write fails
+    # loudly instead of succeeding into a discarded layer.
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    cpus: 1.0
+    # Give the SIGTERM handler in service.py time to run before SIGKILL.
+    stop_grace_period: 10s
+    restart: "no"
+
+  # Batch job, not a service. Run it explicitly with --profile tools.
+  eval:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: support-assistant-work-sample:local
+    profiles:
+      - tools
+    working_dir: /app
+    entrypoint: ["python"]
+    command: ["run_eval.py"]
+    environment:
+      PYTHONPATH: "/app/src"
+    volumes:
+      # Mounted read-only: the harness must not be able to write into the image.
+      - ./run_eval.py:/app/run_eval.py:ro
+      - ./evalset:/app/evalset:ro
+      - ./expected:/app/expected:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: "no"

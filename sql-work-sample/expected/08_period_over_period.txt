@@ -1,0 +1,11 @@
+-- 08_period_over_period.sql  [statement 1]
+queue_name|month|tickets|avg_wait_seconds|avg_handle_seconds|prev_avg_wait_seconds|wait_change_seconds|wait_change_pct
+Billing|2026-08|232|22.4|251.5|NULL|NULL|NULL
+Billing|2026-09|226|19.5|231.6|22.4|-2.9|-12.9
+Escalations|2026-08|49|189.3|919.1|NULL|NULL|NULL
+Escalations|2026-09|66|177.0|902.7|189.3|-12.3|-6.5
+General|2026-08|117|47.6|313.0|NULL|NULL|NULL
+General|2026-09|118|39.7|299.2|47.6|-7.9|-16.5
+Technical|2026-08|162|37.1|435.7|NULL|NULL|NULL
+Technical|2026-09|152|31.5|437.3|37.1|-5.6|-15.1
+-- rows: 8

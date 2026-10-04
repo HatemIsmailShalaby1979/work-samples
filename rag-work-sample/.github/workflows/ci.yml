@@ -1,0 +1,108 @@
+# CI for the support-assistant work sample.
+#
+# This workflow mirrors scripts/ci.py. Every step below has been executed
+# locally by that script, so this file describes checks that are known to run
+# rather than checks that are hoped to run.
+#
+# Nothing here deploys. There is no cloud credential, no registry login, and no
+# secret: the build job builds an image and does not push it.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least privilege: the workflow only reads the repository.
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.13"
+  RUFF_VERSION: "0.16.1"
+
+jobs:
+  lint:
+    name: lint and format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install ruff
+        run: pip install "ruff==${RUFF_VERSION}"
+      - name: Formatting
+        run: ruff format --check --diff .
+      - name: Linting
+        run: ruff check .
+
+  typecheck:
+    name: type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install "mypy>=1.10"
+      - name: mypy
+        run: mypy src --ignore-missing-imports
+
+  test:
+    name: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install "pytest>=8"
+      - name: Run tests
+        run: pytest -q
+
+  evaluation:
+    name: evaluation report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Re-run the harness and compare against the committed report
+        run: python run_eval.py
+
+  build:
+    name: container build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The image is built, not pushed. There is no registry credential in this
+      # workflow and none is needed.
+      - name: Build image
+        run: docker build -t support-assistant-work-sample:ci .
+      - name: Start the container and check its health endpoint
+        run: |
+          docker run -d --name ci-check -p 8080:8080 support-assistant-work-sample:ci
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8080/health; then
+              echo "health endpoint responded"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "health endpoint did not respond; container logs follow"
+          docker logs ci-check
+          exit 1
+      - name: Stop the container
+        if: always()
+        run: docker rm -f ci-check || true

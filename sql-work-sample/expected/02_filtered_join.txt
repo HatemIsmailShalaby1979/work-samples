@@ -1,0 +1,14 @@
+-- 02_filtered_join.sql  [statement 1]
+tickets_total|tickets_without_agent|tickets_joinable
+1122|43|1079
+-- rows: 1
+
+-- 02_filtered_join.sql  [statement 2]
+agent_id|agent_name|ticket_id|created_at|channel|handle_seconds
+5|Ehab Rashad|804|2026-09-13 13:28:33|phone|704
+8|Hana Tarek|890|2026-09-18 18:40:49|phone|697
+6|Farida Lotfy|700|2026-09-08 16:25:28|phone|659
+7|Gamal Hosny|936|2026-09-21 19:10:19|phone|641
+7|Gamal Hosny|829|2026-09-15 15:34:51|phone|639
+6|Farida Lotfy|31|2026-08-03 12:36:10|phone|616
+-- rows: 6

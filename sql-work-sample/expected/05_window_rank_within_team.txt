@@ -1,0 +1,15 @@
+-- 05_window_rank_within_team.sql  [statement 1]
+team_name|agent_name|surveys|avg_csat|csat_rank_in_team|team_avg_csat|vs_team_avg
+Alpha|Amal Nabil|28|4.82|1|4.25|0.57
+Alpha|Dina Samir|36|4.14|2|4.25|-0.11
+Alpha|Carla Adel|37|4.08|3|4.25|-0.17
+Alpha|Bassem Kamal|31|3.97|4|4.25|-0.28
+Bravo|Hana Tarek|32|5.0|1|4.07|0.93
+Bravo|Ehab Rashad|38|4.13|2|4.07|0.06
+Bravo|Gamal Hosny|24|4.0|3|4.07|-0.07
+Bravo|Farida Lotfy|32|3.16|4|4.07|-0.92
+Charlie|Laila Mounir|38|4.39|1|4.26|0.13
+Charlie|Jasmin Adel|33|4.27|2|4.26|0.01
+Charlie|Karim Fathy|44|4.2|3|4.26|-0.06
+Charlie|Ibrahim Zaki|38|4.18|4|4.26|-0.08
+-- rows: 12

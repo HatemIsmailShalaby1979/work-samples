@@ -1,0 +1,209 @@
+==============================================================================
+Support-policy assistant — evaluation report
+==============================================================================
+
+This is a WORK SAMPLE, not production delivery. Nothing here is deployed.
+Every figure below was produced locally on synthetic data.
+
+configuration
+  corpus procedures             15
+  evaluation cases              36
+  answer generator              extractive_mock
+  top_k                         5
+  gate min_score                3.0
+  gate min_margin               1.0
+
+------------------------------------------------------------------------------
+metrics by strategy
+------------------------------------------------------------------------------
+
+  [A] baseline — retrieval only, always answers the top hit
+  strategy                      baseline_retrieval_only
+  cases                         36
+  decision accuracy             0.3611  (13/36)
+  retrieval recall@k            0.8000  (20 labelled cases)
+  UNSUPPORTED ANSWERS           16  (rate 0.4444)
+  answered when it should not   16
+  correct abstentions           0/8
+  correct escalations           0/8
+  latency p50 / p95             measured at runtime — not pinned (see limitations)
+
+  [B] workflow — retrieval + deterministic gate + citations
+  strategy                      workflow_gated
+  cases                         36
+  decision accuracy             0.7778  (28/36)
+  retrieval recall@k            0.8000  (20 labelled cases)
+  UNSUPPORTED ANSWERS           0  (rate 0.0000)
+  answered when it should not   0
+  correct abstentions           7/8
+  correct escalations           8/8
+  latency p50 / p95             measured at runtime — not pinned (see limitations)
+
+------------------------------------------------------------------------------
+what the gate changed
+------------------------------------------------------------------------------
+
+  unsupported answers      16 -> 0   (delta +16)
+  decision accuracy        0.3611 -> 0.7778   (delta +0.4167)
+  correct procedure cited  13/20 -> 13/20   (of labelled cases)
+  correct escalations      0/8 -> 8/8
+  correct abstentions      0/8 -> 7/8
+
+  Reading: the baseline answers everything, so every conflicting, outdated
+  and out-of-scope case becomes an unsupported answer. The gate removes
+  those, and the price it pays is over-escalation on cases it cannot
+  resolve — visible as a decision-accuracy figure that is not perfect.
+
+------------------------------------------------------------------------------
+accuracy by category
+------------------------------------------------------------------------------
+
+  baseline_retrieval_only
+    OK answerable     10/10
+    !! conflicting    0/5
+    !! out_of_scope   0/8
+    !! outdated       0/5
+    !! paraphrased    3/8
+
+  workflow_gated
+    OK answerable     10/10
+    OK conflicting    5/5
+    !! out_of_scope   7/8
+    !! outdated       4/5
+    !! paraphrased    2/8
+
+------------------------------------------------------------------------------
+threshold calibration — gate min_score sweep
+------------------------------------------------------------------------------
+
+  min_score   decision_acc   unsupported   abstain_ok   escalate_ok   chosen
+  --------------------------------------------------------------------------
+        0.0         0.6389             3        0/8         8/8    
+        1.0         0.6944             3        2/8         8/8    
+        2.0         0.7500             3        4/8         8/8    
+        2.5         0.7778             1        6/8         8/8    
+        3.0         0.7778             0        7/8         8/8    <-- default
+        3.5         0.7778             0        8/8         7/8    
+        4.0         0.6944             0        8/8         6/8    
+        5.0         0.6667             0        8/8         6/8    
+        6.0         0.6389             0        8/8         6/8    
+        8.0         0.5000             0        8/8         4/8    
+
+  The floor is the one number in this sample that is chosen rather than
+  derived, so the sweep is reported rather than hidden. 3.0 is the lowest
+  value at which unsupported answers reach zero. 2.5 would answer one more
+  legitimate question and would also let one unsupported answer through —
+  which is the trade-off the floor exists to make. Above 3.5, accuracy falls
+  as the gate refuses questions it could have answered.
+
+  These thresholds were tuned on this evaluation set, which is fitting on
+  the test set. A deployment would calibrate on a held-out set.
+
+------------------------------------------------------------------------------
+failure examples
+------------------------------------------------------------------------------
+
+  baseline_retrieval_only: 23 failure(s)
+    P03 [paraphrased] expected=answer got=answer/supported
+        expected procedure: onboard-catering
+        chosen procedure:   accessibility-assistance
+        retrieved: accessibility-assistance, baggage-allowance, baggage-allowance-promo
+    P04 [paraphrased] expected=answer got=answer/supported
+        expected procedure: accessibility-assistance
+        chosen procedure:   fare-discounts-draft
+        retrieved: fare-discounts-draft, accessibility-assistance, baggage-allowance
+    P05 [paraphrased] expected=answer got=answer/supported
+        expected procedure: group-booking
+        chosen procedure:   booking-online
+        retrieved: booking-online, booking-changes, lost-property
+    P07 [paraphrased] expected=answer got=answer/supported
+        expected procedure: delay-compensation
+        chosen procedure:   baggage-allowance
+        retrieved: baggage-allowance, vehicle-types, booking-changes
+    P08 [paraphrased] expected=answer got=answer/supported
+        expected procedure: booking-changes
+        chosen procedure:   refund-standard
+        retrieved: refund-standard, lost-property, group-booking
+    C01 [conflicting] expected=escalate got=answer/supported
+        retrieved: baggage-allowance, baggage-allowance-promo, accessibility-assistance
+    C02 [conflicting] expected=escalate got=answer/supported
+        retrieved: baggage-allowance, baggage-allowance-promo, accessibility-assistance
+    C03 [conflicting] expected=escalate got=answer/supported
+        retrieved: baggage-allowance, baggage-allowance-promo, accessibility-assistance
+    C04 [conflicting] expected=escalate got=answer/supported
+        retrieved: baggage-allowance-promo, fare-discounts-draft, accessibility-assistance
+    C05 [conflicting] expected=escalate got=answer/supported
+        retrieved: baggage-allowance, baggage-allowance-promo, accessibility-assistance
+    O01 [outdated] expected=answer got=answer/supported
+        expected procedure: refund-standard-v2
+        chosen procedure:   refund-standard
+        retrieved: refund-standard, refund-standard-v2, delay-compensation
+    O02 [outdated] expected=answer got=answer/supported
+        expected procedure: refund-standard-v2
+        chosen procedure:   refund-standard
+        retrieved: refund-standard, refund-standard-v2, delay-compensation
+    ... and 11 more
+
+  workflow_gated: 8 failure(s)
+    P02 [paraphrased] expected=answer got=abstain/no_evidence
+        expected procedure: lost-property
+        chosen procedure:   (none)
+        retrieved: lost-property, accessibility-assistance, baggage-allowance
+    P03 [paraphrased] expected=answer got=abstain/no_evidence
+        expected procedure: onboard-catering
+        chosen procedure:   (none)
+        retrieved: accessibility-assistance, baggage-allowance, baggage-allowance-promo
+    P04 [paraphrased] expected=answer got=escalate/draft_material
+        expected procedure: accessibility-assistance
+        chosen procedure:   (none)
+        retrieved: fare-discounts-draft, accessibility-assistance, baggage-allowance
+    P05 [paraphrased] expected=answer got=abstain/no_evidence
+        expected procedure: group-booking
+        chosen procedure:   (none)
+        retrieved: booking-online, booking-changes, lost-property
+    P07 [paraphrased] expected=answer got=abstain/no_evidence
+        expected procedure: delay-compensation
+        chosen procedure:   (none)
+        retrieved: baggage-allowance, vehicle-types, booking-changes
+    P08 [paraphrased] expected=answer got=abstain/no_evidence
+        expected procedure: booking-changes
+        chosen procedure:   (none)
+        retrieved: refund-standard, lost-property, group-booking
+    O01 [outdated] expected=answer got=abstain/no_evidence
+        expected procedure: refund-standard-v2
+        chosen procedure:   (none)
+        retrieved: refund-standard, refund-standard-v2, delay-compensation
+    X07 [out_of_scope] expected=abstain got=escalate/ambiguous_match
+        retrieved: booking-online, lost-property, vehicle-types
+
+------------------------------------------------------------------------------
+limitations — read before citing any number above
+------------------------------------------------------------------------------
+
+  1. Synthetic corpus and synthetic queries. Both were written by the same
+     author, so they share vocabulary. Real queries would be harder, and
+     recall@k here is optimistic.
+  2. Lexical retrieval only. BM25 cannot match a paraphrase that shares no
+     terms with the procedure. The paraphrased cases show this directly.
+  3. The conflict rule counts live procedures per topic. It detects duplicate
+     coverage, not actual disagreement between procedures — that would need
+     contradiction detection over the text.
+  4. LLM output quality is UNTESTED. The default generator is an extractive
+     mock. The Ollama adapter is implemented and its failure and timeout
+     paths are covered by tests, but no real generation was observed to
+     complete in the environment this was built in: a trivial prompt timed
+     out at 120s via curl and at 300s via the adapter, and the runtime
+     reported no model loaded in memory. Treat the adapter as unverified
+     end to end until a generation is actually seen to return.
+  5. No human review of answers took place. The approval gate covers
+     consequential actions only, not the wording of replies.
+  6. Thresholds (min_score, min_margin) were calibrated on this evaluation
+     set. That is fitting on the test set, and a real deployment would need
+     a held-out set to calibrate against.
+  7. Latency is measured on one machine, in-process, with no concurrency.
+     It is not a throughput figure and does not describe any deployed system.
+     It is the one field the committed report does not pin: wall-clock
+     measurements are not reproducible, so the expected file marks the
+     latency line unpinned while every decision and score is byte-checked.
+  8. No production deployment, no external audit, no real traffic, no
+     revenue. This is a work sample built in one sitting.

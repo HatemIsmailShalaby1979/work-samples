@@ -1,0 +1,5 @@
+# Generated on every run_checks.py invocation — never committed.
+build/
+*.db
+__pycache__/
+*.pyc
