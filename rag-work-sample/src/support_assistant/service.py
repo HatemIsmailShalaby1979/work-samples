@@ -61,6 +61,12 @@ LOGGER = logging.getLogger("support_assistant.service")
 #: this bounds the parse before validation ever runs.
 MAX_BODY_BYTES = 64 * 1024
 
+#: Chunk size and ceiling for draining an over-limit body before replying 413.
+#: The declared Content-Length is client-controlled, so the drain is bounded and
+#: never waits indefinitely for bytes that may never arrive.
+DRAIN_CHUNK_BYTES = 64 * 1024
+DRAIN_LIMIT_BYTES = 8 * 1024 * 1024
+
 
 class Application:
     """Holds the loaded corpus and the configured assistant."""
@@ -135,7 +141,15 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _read_body(self) -> bytes | None:
-        """Read the body, or return None if it is over the limit."""
+        """Read the body, or return None if it is over the limit.
+
+        An oversized body is drained before the 413 is written. Without that, the
+        unread bytes remain in the socket buffer when the handler returns, the
+        server closes the connection mid-stream, and the client sees a
+        ConnectionAbortedError instead of the 413 this method exists to produce.
+        That race made the refusal path intermittently unobservable to a caller,
+        which is the one thing a size limit must never be.
+        """
         raw_length = self.headers.get("Content-Length")
         if raw_length is None:
             return b""
@@ -143,9 +157,29 @@ class Handler(BaseHTTPRequestHandler):
             length = int(raw_length)
         except ValueError:
             return None
-        if length < 0 or length > MAX_BODY_BYTES:
+        if length < 0:
+            return None
+        if length > MAX_BODY_BYTES:
+            self._drain(length)
             return None
         return self.rfile.read(length)
+
+    def _drain(self, length: int) -> None:
+        """Discard `length` bytes so the response can be written and read.
+
+        Bounded, because the declared length is attacker-controlled: nothing here
+        waits indefinitely on a client that sends less than it promised. A
+        short read or a timeout ends the drain early and the 413 still goes out.
+        """
+        remaining = min(length, DRAIN_LIMIT_BYTES)
+        while remaining > 0:
+            try:
+                chunk = self.rfile.read(min(remaining, DRAIN_CHUNK_BYTES))
+            except (OSError, ValueError):
+                return
+            if not chunk:
+                return
+            remaining -= len(chunk)
 
     def log_message(self, format: str, *args: Any) -> None:
         """Suppress the default access log; the service emits structured lines."""
