@@ -73,7 +73,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install "pytest>=8"
+          # anyio is required by 15 async tests marked @pytest.mark.anyio. It
+          # was missing here, so on the first real run of this workflow every
+          # one of them failed with "async def functions are not natively
+          # supported". A machine with anyio already installed hides this.
+          pip install "pytest>=8" "anyio>=4"
       - name: Run tests
         run: pytest -q
 

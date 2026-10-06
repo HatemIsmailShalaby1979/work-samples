@@ -10,7 +10,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+# anyio is required, not optional-in-practice: 15 tests are `async def` marked
+# with @pytest.mark.anyio and conftest.py supplies an anyio_backend fixture.
+# Without the plugin pytest skips them with "async def functions are not natively
+# supported", which reads like a skip and is actually a failure.
+dev = ["pytest>=8", "anyio>=4"]
 
 [build-system]
 requires = ["setuptools>=68"]
