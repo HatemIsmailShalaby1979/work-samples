@@ -3,10 +3,11 @@
 
 <!-- badges:start -->
 
+[![CI](https://github.com/HatemIsmailShalaby1979/work-samples/actions/workflows/CI/badge.svg)](https://github.com/HatemIsmailShalaby1979/work-samples/actions)
 [![last commit](https://img.shields.io/github/last-commit/HatemIsmailShalaby1979/work-samples)](https://github.com/HatemIsmailShalaby1979/work-samples/commits/main)
-![status](https://img.shields.io/badge/ci-no CI-lightgrey?label=no CI%20(2026-10-05))
+![status](https://img.shields.io/badge/ci-success-brightgreen?label=success%20(2026-10-06))
 
-*Measured 2026-10-06 — head `c2a7b9a` (2026-10-05); Python.*
+*Measured 2026-10-06 — CI **success**; head `ffd2c7d` (2026-10-06); Python.*
 
 <!-- No static test or coverage count is shown here: a frozen
      number decays silently. Run the suite for a current figure;
