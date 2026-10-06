@@ -25,6 +25,9 @@ env:
 jobs:
   lint:
     name: lint and format
+    defaults:
+      run:
+        working-directory: rag-work-sample
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,6 +43,9 @@ jobs:
 
   typecheck:
     name: type check
+    defaults:
+      run:
+        working-directory: rag-work-sample
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +61,9 @@ jobs:
 
   test:
     name: tests
+    defaults:
+      run:
+        working-directory: rag-work-sample
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -70,6 +79,9 @@ jobs:
 
   evaluation:
     name: evaluation report
+    defaults:
+      run:
+        working-directory: rag-work-sample
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -84,6 +96,12 @@ jobs:
   build:
     name: container build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        # `docker build .` takes its context from the working directory, and the
+        # Dockerfile is rag-work-sample/Dockerfile. Left at the repository root
+        # by default this would build the wrong context.
+        working-directory: rag-work-sample
     steps:
       - uses: actions/checkout@v4
       # The image is built, not pushed. There is no registry credential in this
